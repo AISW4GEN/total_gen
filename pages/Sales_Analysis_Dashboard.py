@@ -4,12 +4,12 @@ import numpy as np
 import plotly.express as px
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
+st.set_page_config(layout="wide")
+
 CSV_FILE = "data/seoul_tradar_full.csv"
 
 
-# ============================================================
 # 숫자 포매팅 함수
-# ============================================================
 def format_won(x):
     x = float(x)
     if x >= 1e8:
@@ -19,9 +19,7 @@ def format_won(x):
     return str(x)
 
 
-# ============================================================
 # 변동률 해석 함수
-# ============================================================
 def interpret_change(val):
     if pd.isna(val):
         return "데이터 없음"
@@ -37,9 +35,7 @@ def interpret_change(val):
         return f"📉 크게 감소({val:.1f}%)"
 
 
-# ============================================================
-# CSV LOAD
-# ============================================================
+# CSV 불러오기
 @st.cache_data
 def load_csv():
     df = pd.read_csv(CSV_FILE, dtype=str)
@@ -55,9 +51,7 @@ def load_csv():
 df_all = load_csv()
 
 
-# ============================================================
 # 자동 인사이트 생성
-# ============================================================
 def generate_insight(top_df):
     if len(top_df) == 0:
         return "데이터 없음"
@@ -73,9 +67,7 @@ def generate_insight(top_df):
     )
 
 
-# ============================================================
 # 탭 구성
-# ============================================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "📌 매출 TOP10",
     "📊 성별·연령대·시간대 분석",
@@ -84,9 +76,9 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 
-# ============================================================
-# 1️⃣ 매출 TOP10 탭
-# ============================================================
+# ================================================
+# 📌 1. 매출 TOP10 탭
+# ================================================
 with tab1:
     st.subheader("매출 TOP 10 분석")
 
@@ -146,10 +138,11 @@ with tab1:
         b.plotly_chart(fig, use_container_width=True)
 
 
-# ============================================================
-# 2️⃣ 성별·연령대·시간대 분석 탭
-# ============================================================
+# ================================================
+# 📌 2. 성별·연령대·시간대 분석 탭
+# ================================================
 with tab2:
+
     st.subheader("상권·업종별 매출 비교")
 
     trdar = st.selectbox("상권 선택", sorted(df_all["TRDAR_SE_CD_NM"].unique()))
@@ -160,56 +153,62 @@ with tab2:
 
     agg = df_area.select_dtypes(include=["number"]).sum()
 
-    # ==========================
-    # ① 성별 매출 그래프
-    # ==========================
-    st.markdown("### 🔸 성별 매출 비교")
+    # -----------------------------
+    # ✔ 성별 + 연령대 수평 배치
+    # -----------------------------
+    st.markdown("### 🔸 성별 및 연령대 매출 비교")
 
-    gender_df = pd.DataFrame({
-        "성별": ["남성", "여성"],
-        "매출": [agg["ML_SELNG_AMT"], agg["FML_SELNG_AMT"]]
-    })
-    gender_df["표시"] = gender_df["매출"].apply(format_won)
+    col_g, col_a = st.columns(2)
 
-    fig = px.bar(
-        gender_df,
-        x="매출",
-        y="성별",
-        orientation="h",
-        text="표시"
-    )
-    fig.update_traces(textposition="outside")
-    fig.update_xaxes(title="매출(원)")
-    fig.update_yaxes(title="성별")
-    st.plotly_chart(fig, use_container_width=True)
+    # 성별 그래프
+    with col_g:
+        st.markdown("#### 성별 매출 비교")
+        gender_df = pd.DataFrame({
+            "성별": ["남성", "여성"],
+            "매출": [agg["ML_SELNG_AMT"], agg["FML_SELNG_AMT"]]
+        })
+        gender_df["표시"] = gender_df["매출"].apply(format_won)
 
-    # ==========================
-    # ② 연령대 매출 그래프
-    # ==========================
-    st.markdown("### 🔸 연령대별 매출 비중")
+        fig_g = px.bar(
+            gender_df,
+            x="매출",
+            y="성별",
+            orientation="h",
+            text="표시"
+        )
+        fig_g.update_traces(textposition="outside")
+        fig_g.update_xaxes(title="매출(원)")
+        fig_g.update_yaxes(title="성별")
+        st.plotly_chart(fig_g, use_container_width=True)
 
-    age_cols = [
-        ("AGRDE_10_SELNG_AMT", "10대"),
-        ("AGRDE_20_SELNG_AMT", "20대"),
-        ("AGRDE_30_SELNG_AMT", "30대"),
-        ("AGRDE_40_SELNG_AMT", "40대"),
-        ("AGRDE_50_SELNG_AMT", "50대"),
-        ("AGRDE_60_ABOVE_SELNG_AMT", "60대↑"),
-    ]
+    # 연령대 그래프
+    with col_a:
+        st.markdown("#### 연령대별 매출 비중")
 
-    age_df = pd.DataFrame({"연령대": label, "매출": agg[col]} for col, label in age_cols)
-    age_df["표시"] = age_df["매출"].apply(format_won)
+        age_cols = [
+            ("AGRDE_10_SELNG_AMT", "10대"),
+            ("AGRDE_20_SELNG_AMT", "20대"),
+            ("AGRDE_30_SELNG_AMT", "30대"),
+            ("AGRDE_40_SELNG_AMT", "40대"),
+            ("AGRDE_50_SELNG_AMT", "50대"),
+            ("AGRDE_60_ABOVE_SELNG_AMT", "60대↑"),
+        ]
 
-    fig = px.pie(
-        age_df,
-        names="연령대",
-        values="매출"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+        age_df = pd.DataFrame(
+            {"연령대": label, "매출": agg[col]} for col, label in age_cols
+        )
+        age_df["표시"] = age_df["매출"].apply(format_won)
 
-    # ==========================
-    # ③ 시간대별 매출 그래프
-    # ==========================
+        fig_a = px.pie(
+            age_df,
+            names="연령대",
+            values="매출"
+        )
+        st.plotly_chart(fig_a, use_container_width=True)
+
+    # -----------------------------
+    # ✔ 시간대 매출
+    # -----------------------------
     st.markdown("### 🔸 시간대별 매출 그래프")
 
     time_cols = [
@@ -221,7 +220,9 @@ with tab2:
         ("TMZON_21_24_SELNG_AMT", "21~24시"),
     ]
 
-    time_df = pd.DataFrame({"시간대": label, "매출": agg[col]} for col, label in time_cols)
+    time_df = pd.DataFrame(
+        {"시간대": label, "매출": agg[col]} for col, label in time_cols
+    )
     time_df["표시"] = time_df["매출"].apply(format_won)
 
     fig = px.bar(
@@ -238,23 +239,20 @@ with tab2:
     st.plotly_chart(fig, use_container_width=True)
 
 
-
-# ============================================================
-# 3️⃣ 추이 예측 (기존 네 코드 그대로 — 이미 정상)
-# ============================================================
+# ================================================
+# 📌 3. 추이 예측 탭
+# ================================================
 with tab3:
     st.subheader("상권·업종별 미래 매출 예측")
 
     t3_trdar = st.selectbox("상권 선택", sorted(df_all["TRDAR_SE_CD_NM"].unique()), key="t3_trdar")
     t3_svc = st.selectbox("업종 선택", sorted(df_all[df_all["TRDAR_SE_CD_NM"] == t3_trdar]["SVC_INDUTY_CD_NM"].unique()), key="t3_svc")
 
-    # 시계열 구성
     df_reg = df_all[(df_all["TRDAR_SE_CD_NM"] == t3_trdar) & (df_all["SVC_INDUTY_CD_NM"] == t3_svc)]
     ts = df_reg.groupby("STDR_YYQU_CD")["THSMON_SELNG_AMT"].sum().reset_index()
     ts["STDR_YYQU_CD"] = ts["STDR_YYQU_CD"].astype(str)
     ts = ts.sort_values("STDR_YYQU_CD")
 
-    # 최근 12개 분기 사용
     RECENT_N = 12
     ts_recent = ts.tail(RECENT_N)
     y_vals = ts_recent["THSMON_SELNG_AMT"].astype(float).values
@@ -265,8 +263,10 @@ with tab3:
         prev = y_clean[i-1]
         if prev > 0:
             rate = (y_clean[i] - prev) / prev
-            if rate > 0.5: y_clean[i] = prev * 1.5
-            elif rate < -0.5: y_clean[i] = prev * 0.5
+            if rate > 0.5:
+                y_clean[i] = prev * 1.5
+            elif rate < -0.5:
+                y_clean[i] = prev * 0.5
 
     y_log = np.log1p(y_clean)
 
@@ -306,9 +306,9 @@ with tab3:
     st.plotly_chart(fig, use_container_width=True)
 
 
-# ============================================================
-# 4️⃣ 기준 비교 탭
-# ============================================================
+# ================================================
+# 📌 4. 기준 비교 탭
+# ================================================
 with tab4:
 
     st.header("🧩 기준 비교 분석")
@@ -355,6 +355,7 @@ with tab4:
         q = combo.split(" ")[1][0]
         return df_all[(df_all["year"] == y) & (df_all["quarter"] == q)]
 
+    # 2개 기준 비교
     if len(st.session_state.compare_list) == 2:
         comboA, comboB = st.session_state.compare_list
 
@@ -379,7 +380,7 @@ with tab4:
             fig.update_yaxes(title="업종명", autorange="reversed")
             fig.update_traces(textposition="outside")
             st.plotly_chart(fig)
-            st.info(generate_insight(grpA))
+            st.markdown(generate_insight(grpA).replace("\n", "<br>"), unsafe_allow_html=True)
 
         with colB:
             st.subheader(f"📌 {comboB}")
@@ -389,7 +390,7 @@ with tab4:
             fig.update_yaxes(title="업종명", autorange="reversed")
             fig.update_traces(textposition="outside")
             st.plotly_chart(fig)
-            st.info(generate_insight(grpB))
+            st.markdown(generate_insight(grpB).replace("\n", "<br>"), unsafe_allow_html=True)
 
         merged = pd.merge(grpA, grpB, on="SVC_INDUTY_CD_NM",
                           suffixes=("_A", "_B")).fillna(0)
@@ -401,7 +402,9 @@ with tab4:
         merged["해석"] = merged["변동률(%)"].apply(interpret_change)
 
         st.subheader("📈 변동률 및 해석")
-        st.dataframe(merged[["SVC_INDUTY_CD_NM", "변동률(%)", "해석"]])
+
+        styled_df = merged[["SVC_INDUTY_CD_NM", "변동률(%)", "해석"]]
+        st.dataframe(styled_df, use_container_width=True)
 
         fig = px.bar(merged, x="변동률(%)", y="SVC_INDUTY_CD_NM",
                      orientation="h", text="해석")
@@ -409,6 +412,7 @@ with tab4:
         fig.update_yaxes(title="업종명", autorange="reversed")
         st.plotly_chart(fig)
 
+    # 3개 이상 기준 비교
     else:
         st.subheader("📌 다중 기준 비교 (3개 이상)")
         cols = st.columns(len(st.session_state.compare_list))
@@ -429,4 +433,10 @@ with tab4:
                 fig.update_yaxes(title="업종명", autorange="reversed")
                 fig.update_traces(textposition="outside")
                 st.plotly_chart(fig)
-                st.info(generate_insight(grp))
+
+                insight_html = generate_insight(grp).replace("\n", "<br>")
+                st.markdown(f"""
+                <div style="background-color:#e8f3ff; padding:15px; border-radius:10px;">
+                {insight_html}
+                </div>
+                """, unsafe_allow_html=True)

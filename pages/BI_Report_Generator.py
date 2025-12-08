@@ -11,7 +11,6 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT
 from io import BytesIO
 
-
 pdfmetrics.registerFont(TTFont("Nanum", "fonts/NanumGothic.ttf"))
 
 def markdown_to_pdf(md_text: str) -> bytes:
