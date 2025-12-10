@@ -35,16 +35,6 @@ BizDistrict AI는
 
 ---
 
-## 📑 Table of Contents
-- [프로젝트 소개](#프로젝트-소개-description)
-- [설치 방법](#installation)
-- [사용 방법](#usage)
-- [프로젝트 구조](#project-structure)
-- [기술 스택](#tech-stack)
-- [작성자](#author)
-
----
-
 ## 📘 프로젝트 소개 (Description)
 
 BizDistrict AI는 기존 상권 분석의 문제점을 해결하기 위해 만들어졌습니다:
@@ -78,6 +68,10 @@ export OPENAI_API_KEY=your_api_key
 
 # 4) 실행
 streamlit run overview.py
+
+# 5) 데이터 분석 시 사용되는 csv 파일 다운로드
+data / seoul_tradar_full.csv.zip 풀어서 사용
+
 ```
 
 ---
@@ -109,9 +103,9 @@ streamlit run overview.py
 total_gen/
 │
 ├── overview.py
-├── BI_Report_Generator.py
-├── Sales_Analysis_Dashboard.py
-│
+├── pages/
+│     └── BI_Report_Generator.py
+│     └── Sales_Analysis_Dashboard.py
 ├── tools.py
 ├── utils.py
 ├── models.py
@@ -147,6 +141,6 @@ Ko Youngjin
 Email: dseridk003@naver.com  
 GitHub: https://github.com/yjk101
 
-Lee Chansong
-Email:
+Lee Chansong  
+Email: lcsdct64@gmail.com  
 GitHub: https://github.com/songchane
