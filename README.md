@@ -104,10 +104,11 @@ total_gen/
 ├── tools.py
 ├── utils.py
 ├── models.py
-├── trend.py
-│
-└── data/
-      └── seoul_tradar_full.csv
+├── trend.py│
+├── data/
+│     └── seoul_tradar_full.csv
+└── presentation/
+      └── 고영진이찬송_발표자료.pdf
 ```
 
 ---
